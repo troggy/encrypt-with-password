@@ -10,8 +10,15 @@ const aesjs = require('aes-js');
 // PBDKF2 for key derivation
 const pbkdf2 = require('pbkdf2');
 
-// crypto for generating random cipher IV
-const crypto = require('crypto');
+// generate random cipher IV
+const randomBytes = (numBytes) => {
+  // use browser crypto if possible 
+  if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+    return window.crypto.getRandomValues(new Uint8Array(numBytes));
+  }
+  // fallback to crypto module (needs polyfill or Node.js env)
+  return require("crypto").randomBytes(numBytes);
+};
 
 // encrypt text with AES-256 (CBC) using key derived from password argument
 const encryptText = (text, password) => {
@@ -33,7 +40,7 @@ const encryptText = (text, password) => {
   const derivedKey = pbkdf2.pbkdf2Sync(password, 'salt', 1, 256 / 8, 'sha512');
 
   // generate random IV and store in variable
-  const generatedIV = crypto.randomBytes(16);
+  const generatedIV = randomBytes(16);
 
   // AES-CBC object
   const aesCBC = new aesjs.ModeOfOperation.cbc(derivedKey, generatedIV);
